@@ -1,0 +1,11 @@
+.venv/
+.idea/
+__pycache__/
+*.dat
+log.txt
+# Local C++ extension build outputs
+cppfit/build/
+cppfit/.eggs/
+cppfit/*.egg-info/
+cppfit/*.so
+cppfit/*.pyd

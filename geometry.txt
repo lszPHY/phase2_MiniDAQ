@@ -1,0 +1,29 @@
+# geometry assignment
+
+chamberType A
+flipTDCs 1
+tdcColByTubeNo 1
+
+MAX_TDC 4
+MAX_TDC_CHANNEL 24
+MAX_TUBE_LAYER 8
+MAX_TUBE_COLUMN 12
+MAX_TDC_LAYER 4
+
+ML_distance 114.95
+tube_length 0.3
+layer_distance 13.0769836
+column_distance 15.1
+radius 7.5
+min_drift_dist 0.0
+max_drift_dist 7.1
+
+slots_per_ml 2
+
+ML0
+0 0 6
+1 2 6
+
+ML1
+0 1 6
+1 3 6
