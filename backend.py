@@ -128,8 +128,6 @@ class Backend(QtCore.QObject):
             min_layer_hit=6,
             max_hit_per_layer=2,
             max_unique_col_per_layer=2,
-            max_adjacent_layer_x_jump_mm=40.0,
-            max_same_layer_x_span_mm=30.0,
 
             checkTime=True,
             checkHitcount=True,
@@ -255,6 +253,34 @@ class Backend(QtCore.QObject):
 
     # ---------------- geometry registry (GUI-side) ----------------
 
+    def _apply_quality_geometry(self) -> None:
+        """
+        Derive geometry-dependent QA cuts from the registered detector geometry.
+        A Geometry object may override either value with attributes:
+          - quality_max_adjacent_layer_x_jump_mm
+          - quality_max_same_layer_x_span_mm
+        """
+        geos = [g for g in self._geos.values() if g is not None]
+        if not geos:
+            return
+
+        geo = geos[0]
+        col_pitch = float(getattr(geo, "column_distance", 0.0))
+        if not (np.isfinite(col_pitch) and col_pitch > 0.0):
+            return
+
+        adj_jump = getattr(geo, "quality_max_adjacent_layer_x_jump_mm", None)
+        same_span = getattr(geo, "quality_max_same_layer_x_span_mm", None)
+
+        same_span_value = float(same_span) if same_span is not None else 2.0 * col_pitch
+        self._quality.max_same_layer_x_span_mm = same_span_value
+        self._quality.max_adjacent_layer_x_jump_mm = (
+            float(adj_jump) if adj_jump is not None else same_span_value + 10.0
+        )
+        self._quality.n_layers = int(getattr(geo, "MAX_TUBE_LAYER", self._quality.n_layers))
+        self._qc_cache.clear()
+        self._fit_cache.clear()
+
     def set_geometries_from_list(self, geos: List[Any]) -> None:
         out: Dict[int, Any] = {}
         for g in (geos or []):
@@ -267,6 +293,7 @@ class Backend(QtCore.QObject):
                 raise ValueError(f"Duplicate chamber_id {cid}")
             out[cid] = g
         self._geos = out
+        self._apply_quality_geometry()
 
     def set_geometries(self, geos: Dict[int, Any]) -> None:
         out: Dict[int, Any] = {}
@@ -275,6 +302,7 @@ class Backend(QtCore.QObject):
                 continue
             out[int(cid)] = g
         self._geos = out
+        self._apply_quality_geometry()
 
     def get_geometry(self, chamber_id: int) -> Optional[Any]:
         return self._geos.get(int(chamber_id))
